@@ -4,7 +4,7 @@ blinker==1.8.2
 bottle==0.13.1
 branca==0.8.0
 bs4==0.0.1
-cefpython3==66.1
+cefpython3==66.0
 certifi==2024.8.30
 cffi==1.17.1
 charset-normalizer==3.3.2
