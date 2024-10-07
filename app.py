@@ -6,10 +6,17 @@ import pytz
 import folium
 from folium.plugins import FloatImage
 import requests
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-HERE_API_KEY = 'voCcoFX-T4-p2X6i-24_LfG2HrTxNMSZoAGB-lZxHUU'
+load_dotenv()
+
+HERE_API_KEY = os.getenv('HERE_API_KEY')
+
+if not HERE_API_KEY:
+    raise ValueError("Missing HERE API Key. Ensure it is set in environment variables.")
 
 RSS_FEED_URL = "https://data.emergency.vic.gov.au/Show?pageId=getIncidentRSS"
 
