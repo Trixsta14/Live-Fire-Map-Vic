@@ -83,9 +83,18 @@ def search_postcode():
     data = response.json()
 
     if data and 'items' in data and len(data['items']) > 0:
-        coordinates = data['items'][0]['position']
-        address = data['items'][0]['address']['label']
+        # Extracting the first result
+        location_data = data['items'][0]
+        address = location_data.get('address', {})
+        state = address.get('state', '')
+        country = address.get('countryCode', '')
+        coordinates = location_data['position']
 
+        # Check if the result is within Victoria, Australia
+        if country != 'AUS' or state != 'Victoria':
+            return jsonify({'error': 'Invalid Postcode, try suburb name instead'}), 400
+
+        # If valid, proceed with creating the map
         mapObj = folium.Map(location=[coordinates['lat'], coordinates['lng']], zoom_start=12, tiles=None)
 
         default_layer = folium.TileLayer(
@@ -128,7 +137,7 @@ def search_postcode():
 
         folium.Marker(
             location=[coordinates['lat'], coordinates['lng']],
-            popup=f"<strong>{address}</strong>",
+            popup=f"<strong>{address['label']}</strong>",
             icon=folium.Icon(color='blue')
         ).add_to(mapObj)
 
@@ -141,7 +150,7 @@ def search_postcode():
         return jsonify({
             'latitude': coordinates['lat'],
             'longitude': coordinates['lng'],
-            'address': address,
+            'address': address['label'],
             'map_iframe': iframe
         })
 

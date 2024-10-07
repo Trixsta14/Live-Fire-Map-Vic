@@ -168,24 +168,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
     <script>
         $(document).ready(function() {
+            // Handling the form submission for searching by postcode
             $('#search-form').on('submit', function(e) {
                 e.preventDefault();
                 var postcode = $('#postcode').val();
+                
+                // Post the postcode data to the Flask route
                 $.post('/search_postcode', { postcode: postcode }, function(data) {
                     if (data.error) {
+                        // If there is an error (e.g., invalid postcode), display an alert
                         alert(data.error);
                     } else {
+                        // If successful, update the map container with the returned iframe
                         $('#map-container').html(data.map_iframe);
                     }
+                }).fail(function(jqXHR) {
+                    // In case of a failure (e.g., server error), show the error message
+                    alert('Invalid postcode or suburb name. Please try again.');
                 });
             });
+    
+            // Refresh button to reload the page
             $('#refresh-btn').on('click', function() {
                 location.reload();
             });
+    
+            // Auto-refresh the page every 60 seconds
             setInterval(function() {
                 location.reload();
             }, 60000);
         });
-    </script>
+    </script>    
 </body>
 </html>
