@@ -44,7 +44,6 @@ pythonnet==3.0.4
 pytweening==1.0.4
 pytz==2024.2
 pywebview==5.2
-pywin32==305
 requests==2.32.3
 sgmllib3k==1.0.0
 six==1.16.0
