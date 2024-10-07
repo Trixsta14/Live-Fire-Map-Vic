@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Live Fire Map</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #header {
+            background-color: #007bff;
+            padding: 10px 20px;
+            color: white;
+            font-size: 24px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            position: fixed;
+            top: 0;
+            z-index: 1001;
+        }
+        #header h1 {
+            margin: 0;
+        }
+        #search-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #search-form input {
+            height: 30px;
+            padding: 5px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: none;
+        }
+        #search-form button {
+            height: 30px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            background-color: #ffffff;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #search-form button:hover {
+            background-color: #e6e6e6;
+        }
+        #main-container {
+            display: flex;
+            height: calc(100vh - 85px);
+            padding-top: 60px;
+            box-sizing: border-box;
+        }
+        #sidebar {
+            width: 200px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: calc(100vh - 60px);
+            padding-bottom: 25px;
+        }
+        #sidebar ul {
+            list-style-type: none;
+            padding: 0;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+        }
+        #sidebar ul li a {
+            text-decoration: none;
+            font-size: 20px;
+            color: white;
+            display: block;
+            background-color: #007bff;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        #sidebar ul li a:hover {
+            background-color: #003d7a;
+            transform: scale(1.02);
+        }
+        #map-container {
+            flex: 1;
+            height: calc(100vh - 85px);
+            display: block;
+            overflow: hidden;
+        }
+        #footer {
+            background-color: #003d7a;
+            color: white;
+            text-align: center;
+            font-size: 10px;
+            padding: 5px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 25px;
+            z-index: 1000;
+        }
+        #refresh-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        #refresh-btn:hover {
+            background-color: #003d7a;
+        }
+        .leaflet-bottom.leaflet-left {
+            bottom: 10px !important;
+            left: 10px !important;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Victorian Live Fire Map</h1>
+        <form id="search-form">
+            <input type="text" id="postcode" name="postcode" placeholder="Enter postcode or Suburb" required>
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        </form>
+        <button id="refresh-btn" class="btn btn-secondary btn-sm" style="margin-left: 20px;">Refresh</button>
+    </div>
+    <div id="main-container">
+        <div id="map-container">
+            {{ iframe | safe }}
+        </div>
+        <div id="sidebar">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="https://www.cfa.vic.gov.au/warnings-restrictions/total-fire-bans-and-ratings" target="_blank">Fire Danger Ratings</a></li>
+                <li><a href="https://emergency.vic.gov.au/respond" target="_blank">Vic Emergency</a></li>
+                <li><a href="https://www.cfa.vic.gov.au" target="_blank">CFA Feed</a></li>
+                <li><a href="http://www.bom.gov.au/vic/index.shtml" target="_blank">Weather</a></li>
+                <li><a href="https://www.cfa.vic.gov.au/rss-feeds" target="_blank">RSS Feed</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="footer">
+        All information comes from CFA Victoria. Please double-check Vic Emergency for updates. Ring 000 For Emergencies. Page updates every 60s
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#search-form').on('submit', function(e) {
+                e.preventDefault();
+                var postcode = $('#postcode').val();
+                $.post('/search_postcode', { postcode: postcode }, function(data) {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        $('#map-container').html(data.map_iframe);
+                    }
+                });
+            });
+            $('#refresh-btn').on('click', function() {
+                location.reload();
+            });
+            setInterval(function() {
+                location.reload();
+            }, 60000);
+        });
+    </script>
+</body>
+</html>
